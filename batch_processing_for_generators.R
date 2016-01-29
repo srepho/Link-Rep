@@ -23,8 +23,16 @@ valid_colname_index_func <- function( name_list )
 remove_us_dollar_symbol_file_name_func <- function( old_name_list )
 {
   invalid_file_name_index <- grep( "/~", old_name_list )
-  new_name_list <- old_name_list[ -invalid_file_name_index ]
-  return( new_name_list )
+  if( length( invalid_file_name_index ) )
+  {
+    new_name_list <- old_name_list[ -invalid_file_name_index ]
+    return( new_name_list )
+  }
+  else
+  {
+    new_name_list <- old_name_list
+    return( new_name_list )
+  }
 }
 
 detect_data_range_start_row_func <-function( selected_sheet, col_name_list )
@@ -74,12 +82,12 @@ robust_process_date_func <- function( x )
     temp_date_string <- as.character( as.Date( temp_x, origin = "1900-01-01" ) )
     return( temp_date_string )
   }
-
+  
 }
 ################# function parts end ################# 
 
 ## scan whole path
-input_path <- "C:/Users/Jinwei.Xu/Desktop/Link's Job Task on 19 Jan 2016/Link/Sources/"
+input_path <- "C:/Users/Jinwei.Xu/Desktop/from Stephen/28 Jan 2016/Generators/"
 generator_file_name_list <- dir( path = input_path, recursive = TRUE, ignore.case = TRUE, pattern = "generator" )
 generator_file_name_list <- remove_us_dollar_symbol_file_name_func( generator_file_name_list )
 
@@ -120,27 +128,38 @@ for( file_name_index in 1 : length( generator_file_name_list ) )
   # get selected sheet name
   selected_sheet_name <- source_table_sheet_name[ target_sheet_id[ selected_target_sheet_id ] ]
   
-  # import selected sheet name
-  selected_sheet <- read_excel( source_table_complete_path, sheet = selected_sheet_name )
-  
-  # judge valid colume name
-  temp_col_name_list <- colnames( selected_sheet )
-  temp_valid_colname_index <- valid_colname_index_func( temp_col_name_list )
-  if( length( temp_valid_colname_index ) < length( temp_col_name_list ) )
+  # judge whether there is no "selected sheet name" or not
+  if( length( selected_sheet_name ) )
   {
-    # invalid one
-    col_name_list <- as.character( selected_sheet[ 1, ] )
-  }else
-  {
-    # valid ones
-    col_name_list <- colnames( selected_sheet )
-  }  
   
-  # get aggregated col name list  
-  unique_col_name <- intersect( unique_col_name, tolower( col_name_list ) )
+    # import selected sheet name
+    selected_sheet <- read_excel( source_table_complete_path, sheet = selected_sheet_name )
   
-  # get all col name list
-  all_col_name_list[ file_name_index ] <- list( col_name_list )
+    # judge valid colume name
+    temp_col_name_list <- colnames( selected_sheet )
+    temp_valid_colname_index <- valid_colname_index_func( temp_col_name_list )
+    if( length( temp_valid_colname_index ) < length( temp_col_name_list ) )
+    {
+      
+      # invalid one
+      col_name_list <- as.character( selected_sheet[ 1, ] )
+  
+    }
+    else
+    {
+    
+      # valid ones
+      col_name_list <- colnames( selected_sheet )
+      
+    }  
+  
+    # get aggregated col name list  
+    unique_col_name <- intersect( unique_col_name, tolower( col_name_list ) )
+  
+    # get all col name list
+    all_col_name_list[ file_name_index ] <- list( col_name_list )
+    
+  }
   
 }
 
@@ -164,7 +183,6 @@ data_row_sum <- 0
 Date_row_sum <- 0
 
 for( file_name_index in 1 : length( generator_file_name_list ) )
-# file_name_index <- 1
 {  
   
   # set source table name 
@@ -183,59 +201,71 @@ for( file_name_index in 1 : length( generator_file_name_list ) )
   # get selected sheet name
   selected_sheet_name <- source_table_sheet_name[ target_sheet_id[ selected_target_sheet_id ] ]
   
-  # import selected sheet name
-  selected_sheet <- read_excel( source_table_complete_path, sheet = selected_sheet_name )  
-  
-  # generate new table
-  temp_col_name_list <- all_col_name_list[[ file_name_index ]]
-  data_start_row <- detect_data_range_start_row_func( selected_sheet, temp_col_name_list )
-  
-  ####################### print out intermediate status (start) ####################### 
-  # print out the current excel table sheet
-  print( "============================================================" )
-  print( generator_file_name_list[ file_name_index ] )
-  print( paste( "Data range starts from ", data_start_row, " row", sep = "" ) )
-  print( length( data_start_row : dim( selected_sheet )[ 1 ] ) )
-  print( "============================================================" )
-  data_row_sum <- data_row_sum + length( data_start_row : dim( selected_sheet )[ 1 ] )
-  ####################### print out intermediate status (end) #######################
-  
-  ####################### process date column (start) #######################
-  # process date column
-  temp_date_number_value <- selected_sheet[ data_start_row : dim( selected_sheet )[ 1 ], date_col_index_list[[ file_name_index ]] ]
-  
-  # judge whether it is a date
-  temp_date_sequence_value <- NULL
-  for( row_index in 1 : dim( temp_date_number_value )[ 1 ] )
+  # judge whether there is no "selected sheet name" or not
+  if( length( selected_sheet_name ) )
   {
-    temp_date_sequence_value[ row_index ] <- robust_process_date_func( temp_date_number_value[ row_index, 1 ] )
-#     if( assertthat::is.date( temp_date_number_value[ row_index, 1 ] ) )
-#     {
-#       temp_date_sequence_value[ row_index ] <- temp_date_number_value[ row_index, 1 ]
-#     }
-#     else
-#     {
-#       temp_date_sequence_value[ row_index ] <- as.numeric( temp_date_number_value[ row_index, 1 ] )
-#     }
+  
+    # import selected sheet name
+    selected_sheet <- read_excel( source_table_complete_path, sheet = selected_sheet_name )  
+  
+    # generate new table
+    temp_col_name_list <- all_col_name_list[[ file_name_index ]]
+    data_start_row <- detect_data_range_start_row_func( selected_sheet, temp_col_name_list )
+  
+    ####################### print out intermediate status (start) ####################### 
+    # print out the current excel table sheet
+    print( "============================================================" )
+    print( generator_file_name_list[ file_name_index ] )
+    print( paste( "Data range starts from ", data_start_row, " row", sep = "" ) )
+    print( length( data_start_row : dim( selected_sheet )[ 1 ] ) )
+    print( "============================================================" )
+    data_row_sum <- data_row_sum + length( data_start_row : dim( selected_sheet )[ 1 ] )
+    ####################### print out intermediate status (end) #######################
+  
+    ####################### process date column (start) #######################
+    # process date column
+    temp_date_number_value <- selected_sheet[ data_start_row : dim( selected_sheet )[ 1 ], date_col_index_list[[ file_name_index ]] ]
+  
+    # judge whether it is a date
+    temp_date_sequence_value <- NULL
+    for( row_index in 1 : dim( temp_date_number_value )[ 1 ] )
+    {
+      temp_date_sequence_value[ row_index ] <- robust_process_date_func( temp_date_number_value[ row_index, 1 ] )
+    }
+  
+    # completely transfer into date sequence
+    Date_row_sum <- Date_row_sum + length( temp_date_sequence_value )
+  
+    # copy date sequence into table sheet
+    selected_sheet[ data_start_row : dim( selected_sheet )[ 1 ], date_col_index_list[[ file_name_index ]] ] <- temp_date_sequence_value
+    ####################### process date column (end) #######################
+  
+    # copy and paste
+    temp_new_table <- selected_sheet[ data_start_row : dim( selected_sheet )[ 1 ], overlapping_selected_col_index_list[[ file_name_index ]] ]
+    colnames( temp_new_table ) <- rep( "", length( overlapping_col_name ) )
+    new_table <- rbind( new_table, temp_new_table ) 
+    
+  }
+  else
+  {
+    
+    # show "warning - no such table sheet exists"
+    print( "============================================================" )
+    print( paste( "No ", toupper( target_sheet_name ), " data sheet exists in ", generator_file_name_list[ file_name_index ], sep = "" ) )
+    print( "============================================================" )
+    
   }
   
-  # completely transfer into date sequence
-  # temp_date_sequence_value <- as.character( as.Date( temp_date_sequence_value, origin = "1900-01-01" ) )
-  Date_row_sum <- Date_row_sum + length( temp_date_sequence_value )
-  
-  # copy date sequence into table sheet
-  selected_sheet[ data_start_row : dim( selected_sheet )[ 1 ], date_col_index_list[[ file_name_index ]] ] <- temp_date_sequence_value
-  ####################### process date column (end) #######################
-  
-  # copy and paste
-  temp_new_table <- selected_sheet[ data_start_row : dim( selected_sheet )[ 1 ], overlapping_selected_col_index_list[[ file_name_index ]] ]
-  colnames( temp_new_table ) <- rep( "", length( overlapping_col_name ) )
-  new_table <- rbind( new_table, temp_new_table ) 
-
 }
+
+# print results
+print( paste( "Data range row sum = ", data_row_sum, sep = "" ) )
+print( paste( "Date row sum = ", Date_row_sum, sep = "" ) )
 
 # put column names back to new table
 colnames( new_table ) <- sapply( unique_col_name, simpleCap )
 
-print( paste( "Data range row sum = ", data_row_sum, sep = "" ) )
-print( paste( "Date row sum = ", Date_row_sum, sep = "" ) )
+# write "new table" into an Excel CSV table
+csv_table_file_name <- paste( input_path, "Whole_", toupper( target_sheet_name ), "_Data.csv", sep = "" )
+write.csv( new_table, file = csv_table_file_name, na = "", row.names = FALSE )
+
